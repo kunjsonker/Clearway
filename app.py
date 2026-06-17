@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 import pydeck as pdk
 import os
+import zipfile
 
 # -----------------------------------------------------------------------------
 # PAGE CONFIGURATION
@@ -26,12 +27,19 @@ def load_and_clean_data(filepath):
     Loads the dataset, calculates duration, and assigns vehicle impact weights.
     Cached so it only runs ONCE.
     """
-    # Pandas natively reads .zip files on the fly!
-    df = pd.read_csv(
-        filepath, 
-        on_bad_lines='skip', 
-        low_memory=False
-    )
+    # Check if it's a zip file to handle Mac hidden files (__MACOSX) safely
+    if filepath.endswith('.zip'):
+        with zipfile.ZipFile(filepath, 'r') as z:
+            # Find the actual CSV file, ignoring Mac hidden folders
+            csv_files = [f for f in z.namelist() if f.endswith('.csv') and '__MACOSX' not in f]
+            if not csv_files:
+                raise ValueError("No valid CSV found in the zip file.")
+            
+            # Open only the clean CSV file
+            with z.open(csv_files[0]) as f:
+                df = pd.read_csv(f, on_bad_lines='skip', low_memory=False)
+    else:
+        df = pd.read_csv(filepath, on_bad_lines='skip', low_memory=False)
     
     df['created_datetime'] = pd.to_datetime(df['created_datetime'], errors='coerce', utc=True)
     df['modified_datetime'] = pd.to_datetime(df['modified_datetime'], errors='coerce', utc=True)
@@ -229,5 +237,5 @@ try:
     else:
         st.warning(f"No traffic incidents recorded for {target_hour}:00 matching the current filters.")
 
-except FileNotFoundError:
-    st.error("⚠️ File not found! Please ensure your dataset is named `parking_data.csv` (or `.csv.zip`) and is in the same folder as `app.py`.")
+except Exception as e:
+    st.error(f"⚠️ Error loading data: {e}. Please ensure your dataset is named `parking_data.csv` (or `.csv.zip`) and uploaded correctly.")
