@@ -123,7 +123,7 @@ try:
                 center_lon=('longitude', 'mean'),
                 total_violations=('cluster_id', 'count'),
                 avg_duration=('duration_mins', 'mean'),
-                heavy_count=('vehicle_weight', lambda x: sum(x >= 5)), # TANKERS/CABS
+                heavy_count=('vehicle_weight', lambda x: sum(x >= 5)), # Heavy Vehicles (Tanker, LGV, Maxi-Cab)
                 total_weight=('vehicle_weight', 'sum'),
                 common_violation=('violation_clean', lambda x: x.mode().iloc[0] if not x.empty else "MIXED"),
                 common_location=('location', lambda x: x.mode().iloc[0] if not x.empty else "Unknown Area")
@@ -205,7 +205,7 @@ try:
             with col_header1:
                 st.subheader(f"⚡ {status_label} Dispatch Priority Feed")
                 # Added transparency to how the impact score is calculated!
-                st.caption("**Impact Score Formula:** $\Sigma(\\text{vehicle weight}) \\times (1 + \\text{avg stagnation time} / 60\\text{min})$. <br> Vehicle weight reflects estimated lane-blocking severity; stagnation time reflects duration of road obstruction.", unsafe_allow_html=True)
+                st.caption(r"**Impact Score Formula:** $\sum(\text{vehicle weight}) \times \left(1 + \frac{\text{avg stagnation time}}{60\text{min}}\right)$  " "\n\n" "Vehicle weight reflects estimated lane-blocking severity; stagnation time reflects duration of road obstruction.")
             with col_header2:
                 # Provide a downloadable CSV of the dispatch plan
                 csv = cluster_metrics[['cluster_id', 'common_location', 'impact_score', 'total_violations', 'heavy_count', 'common_violation']].to_csv(index=False)
