@@ -79,8 +79,8 @@ try:
     st.sidebar.header("1. Temporal Filter")
     selected_hour = st.sidebar.slider("Current Hour of Day", 0, 23, 12)
     
-    st.sidebar.header("2. 🔮 Crystal Ball (Predictive)")
-    show_prediction = st.sidebar.checkbox("Forecast Next Hour Hotspots", value=False)
+    st.sidebar.header("2. 🕒 Next Hour — Historical Pattern")
+    show_prediction = st.sidebar.checkbox("Show Historical Pattern for Next Hour", value=False)
     
     st.sidebar.header("3. Vehicle Focus")
     all_vehicles = df['vehicle_type'].dropna().unique().tolist()
@@ -95,7 +95,7 @@ try:
     # --- CORE FILTERING LOGIC ---
     # Determine which hour we are analyzing based on the Crystal Ball toggle
     target_hour = (selected_hour + 1) % 24 if show_prediction else selected_hour
-    status_label = "Forecasted" if show_prediction else "Active"
+    status_label = "Historical Pattern" if show_prediction else "Active"
     
     # Fast in-memory filter for the selected time AND selected vehicles
     filtered_df = df[(df['hour_of_day'] == target_hour) & (df['vehicle_type'].isin(selected_vehicles))].copy()
@@ -204,6 +204,8 @@ try:
             col_header1, col_header2 = st.columns([0.7, 0.3])
             with col_header1:
                 st.subheader(f"⚡ {status_label} Dispatch Priority Feed")
+                # Added transparency to how the impact score is calculated!
+                st.caption("**Impact Score Formula:** $\Sigma(\\text{vehicle weight}) \\times (1 + \\text{avg stagnation time} / 60\\text{min})$. <br> Vehicle weight reflects estimated lane-blocking severity; stagnation time reflects duration of road obstruction.", unsafe_allow_html=True)
             with col_header2:
                 # Provide a downloadable CSV of the dispatch plan
                 csv = cluster_metrics[['cluster_id', 'common_location', 'impact_score', 'total_violations', 'heavy_count', 'common_violation']].to_csv(index=False)
@@ -238,4 +240,4 @@ try:
         st.warning(f"No traffic incidents recorded for {target_hour}:00 matching the current filters.")
 
 except Exception as e:
-    st.error(f"⚠️ Error loading data: {e}. Please ensure your dataset is named `parking_data.csv` (or `.csv.zip`) and uploaded correctly.")
+    st.error(f"⚠️ Error loading data: {e}. Please ensure your dataset is located in the root repository folder and is named `parking_data.csv.zip`, `parking_data.zip`, or `parking_data.csv`.")
