@@ -6,9 +6,7 @@ import pydeck as pdk
 import os
 import zipfile
 
-# -----------------------------------------------------------------------------
-# PAGE CONFIGURATION
-# -----------------------------------------------------------------------------
+
 st.set_page_config(
     page_title="ClearWay AI | Predictive Engine",
     page_icon="🚨",
@@ -18,9 +16,6 @@ st.set_page_config(
 st.title("🚨 ClearWay AI: Predictive Dispatch Engine")
 st.markdown("Transforming raw violation coordinates into prioritized operational targets using DBSCAN clustering.")
 
-# -----------------------------------------------------------------------------
-# STEP 1: DATA INGESTION & CACHING PIPELINE
-# -----------------------------------------------------------------------------
 @st.cache_data(show_spinner=True)
 def load_and_clean_data(filepath):
     """
@@ -60,12 +55,9 @@ def load_and_clean_data(filepath):
     
     return df
 
-# -----------------------------------------------------------------------------
-# STEP 2: AI CLUSTERING & DASHBOARD UI
-# -----------------------------------------------------------------------------
 try:
-    # --- DYNAMIC FILE LOADER ---
-    # Look for the compressed version first to bypass GitHub's 100MB limit
+    
+    
     if os.path.exists("parking_data.csv.zip"):
         file_path = "parking_data.csv.zip"
     elif os.path.exists("parking_data.zip"):
@@ -92,7 +84,7 @@ try:
     eps_meters = st.sidebar.slider("Search Radius (meters)", 10, 200, 50, 10)
     min_samples = st.sidebar.slider("Min Incidents to form Hotspot", 2, 20, 3)
 
-    # --- CORE FILTERING LOGIC ---
+    
     # Determine which hour we are analyzing based on the Crystal Ball toggle
     target_hour = (selected_hour + 1) % 24 if show_prediction else selected_hour
     status_label = "Historical Pattern" if show_prediction else "Active"
@@ -100,7 +92,7 @@ try:
     # Fast in-memory filter for the selected time AND selected vehicles
     filtered_df = df[(df['hour_of_day'] == target_hour) & (df['vehicle_type'].isin(selected_vehicles))].copy()
     
-    # --- CORE CLUSTERING LOGIC ---
+    
     if len(filtered_df) > 0:
         # Mathematically precise distance calculation using Haversine (Earth's curvature)
         kms_per_radian = 6371.0088
@@ -115,7 +107,7 @@ try:
         hotspots_df = filtered_df[filtered_df['cluster_id'] != -1]
         noise_df = filtered_df[filtered_df['cluster_id'] == -1]
         
-        # --- IMPACT SCORING ---
+        
         if not hotspots_df.empty:
             # Aggregate data by cluster to score them
             cluster_metrics = hotspots_df.groupby('cluster_id').agg(
@@ -137,7 +129,7 @@ try:
             # Sort by highest priority
             cluster_metrics = cluster_metrics.sort_values(by='impact_score', ascending=False).reset_index(drop=True)
             
-            # --- TOP METRICS ---
+            
             col1, col2, col3 = st.columns(3)
             col1.metric(f"{status_label} Hotspots Detected", len(cluster_metrics))
             col2.metric("Total Vehicles in Hotspots", len(hotspots_df))
@@ -145,7 +137,7 @@ try:
             
             st.markdown("---")
             
-            # --- CITY-WIDE TRENDS ---
+            
             st.subheader("📊 Daily Congestion Trends")
             st.caption("City-wide volume of violations by hour based on your current vehicle filters.")
             # Filter the main dataframe by selected vehicles to show accurate trends
@@ -155,7 +147,7 @@ try:
             
             st.markdown("---")
             
-            # --- 3D MAP RENDERING (PYDECK) ---
+            
             st.subheader(f"🗺️ 3D Operational Heatmap ({target_hour}:00)")
             st.caption(f"Showing **{status_label}** target zones. Height and color represent Congestion Impact Scores. *(Hold Shift and drag to tilt map)*")
             
@@ -180,9 +172,9 @@ try:
                 data=map_data,
                 get_position='[lon, lat]',
                 get_elevation='impact_score',
-                elevation_scale=30,  # Doubled the height of the pillars
-                radius=100,          # Reduced the thickness of the pillars
-                get_fill_color='[255, 50, 50, 255]', # Made the color a solid, vibrant red
+                elevation_scale=30,  
+                radius=100,          
+                get_fill_color='[255, 50, 50, 255]', 
                 pickable=True,
                 auto_highlight=True,
             )
@@ -200,7 +192,7 @@ try:
             
             st.markdown("---")
             
-            # --- DISPATCH FEED & EXPORT ---
+            
             col_header1, col_header2 = st.columns([0.7, 0.3])
             with col_header1:
                 st.subheader(f"⚡ {status_label} Dispatch Priority Feed")
